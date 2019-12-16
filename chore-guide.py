@@ -23,10 +23,10 @@ def menu(item):
 
 
 def gettask():
-    """ blank line(s) being added at end of file, needs to stop """
+    """ blank line(s) being added at end of csv file, needs to stop """
 
     tname = input("enter task name")
-    tnum = int(input("enter task number"))  # need to track this
+    tnum = int(input("enter task number"))  # need to track and generate this
     tdate = input("enter the date")
     timespent = int(input("enter the approximate time spent in minutes"))
     drate = int(input("enter the difficulty rating (1{easy} to 5{difficult})"))

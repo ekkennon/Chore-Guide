@@ -1,3 +1,4 @@
+TaskName,TaskNum,Date,TimeSpentMins,DifficultyRate,NecessityRate,FunRate,Classification,Notes
 my task,1,15 dec,10,1,1,5,NeedLimit,none
 my task,2,15 dec,10,1,5,2,NeedReminder,none
 my task,3,15 dec,10,4,4,5,NeedFinish,none
