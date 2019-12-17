@@ -5,51 +5,70 @@ import sklearn
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import preprocessing
 import csv
+from goal import Goal
+from chore import Chore
+from task import Task
+from datetime import datetime
 
 
 def main():
-    menu(int(input("enter 0 to add a task, enter 1 to run the AI")))
-    done = input("press any key when done")
-    return
+    print("0 - add a completed task\n",
+          "1 - run the AI\n",
+          "2 - create a new Task/Chore type\n",
+          "3 - create a new Goal type\n")
+    item = int(input("select option: "))
 
-
-def menu(item):
-    if item == 1:
+    if item == 0:
+        get_task_data()
+    elif item == 1:
         runai()
-    else:
-        gettask()
+    elif item == 2:
+        add_chore()
+    elif item == 3:
+        add_goal()
 
+    done = input("press any key to exit")
+    print(done)
     return
 
 
-def gettask():
-    """ blank line(s) being added at end of csv file, needs to stop """
+def get_task_data():
+    print("Choose task from : ", choreList)
+    chore = input("enter the associated chore: ")
+    chorerow = get_item_from_file(choreFile, chore, "ChoreName")
+    c = Chore(chorerow["ChoreName"], chorerow["Goal"], chorerow["TimeSpent"], chorerow["Difficulty"],
+              chorerow["Necessity"], chorerow["Fun"], chorerow["Category"], chorerow["Priority"], chorerow["Notes"])
 
-    tname = input("enter task name")
-    tnum = int(input("enter task number"))  # need to track and generate this
-    tdate = input("enter the date")
-    timespent = int(input("enter the approximate time spent in minutes"))
-    drate = int(input("enter the difficulty rating (1{easy} to 5{difficult})"))
-    nrate = int(input("enter the necessity rating (1{unnecessary} to 5{necessary})"))
-    frate = int(input("enter the fun rating (1{boring} to 5{fun})"))
-    tc = input("enter the classification (NeedMotivate, NeedLimit, NeedReminder, NeedFinish)")  # get int instead
-    tnote = input("enter notes")
-    data = [[tname, tnum, tdate, timespent, drate, nrate, frate, tc, tnote]]
+    print("Estimated Time Taken in Minutes: ", c.get_mins())
+    print("Estimated Difficulty Rating: ", c.get_difficulty())
+    print("Estimated Necessity Rating: ", c.get_necessity())
+    print("Estimated Fun Rating: ", c.get_fun())
+    print("Predicted Category: ", c.get_category())
+    print("Chore Notes: ", c.get_notes(), "\n")
 
-    myFile = open(csvFile, 'a')
-    with myFile:
-        writer = csv.writer(myFile)
-        writer.writerows(data)
+    num = 1  # int(input("enter task number: "))  # need to track and generate this
 
+    timespent = int(input("enter the approximate time spent in minutes: "))
+    note = input("enter notes: ")
+
+    # predict these
+    drate = int(input("enter the difficulty rating (1{easy} to 5{difficult}): "))
+    nrate = int(input("enter the necessity rating (1{unnecessary} to 5{necessary}): "))
+    frate = int(input("enter the fun rating (1{boring} to 5{fun}): "))
+    cat = input("enter the category (NeedMotivate, NeedLimit, NeedReminder, NeedFinish): ")  # get int instead
+
+    task = Task(chore, num, curr_date, timespent, drate, nrate, frate, cat, note)
+    tasklist = task.to_list()
+    add_to_file(taskFile, tasklist)
     print("task added")
     return
 
 
 def runai():
-    data = pandas.read_csv(csvFile)
-    classes = list(data["Classification"].unique())
-    numNeighbs = len(classes) + 1
-    """ probably don't need this method for data with many classifications or for well-defined classifications """
+    data = pandas.read_csv(taskFile)
+    categories = list(data["Category"].unique())
+    numNeighbs = len(categories) + 1
+    """ probably don't need this method for data with many categories or for well-defined categories """
 
     """ eventually this program should not accept data with less than 2 classifications,
     which makes the next if statement unnecessary """
@@ -61,11 +80,11 @@ def runai():
     """ maybe there is a more efficient way to do the proceeding if statement """
 
     encoder = preprocessing.LabelEncoder()
-    classification = encoder.fit_transform(list(data["Classification"]))
+    category = encoder.fit_transform(list(data["Category"]))
 
     """ scale TimeSpentMins to be more like the range of the ratings columns """
     inputs = list(zip(data["TimeSpentMins"], data["DifficultyRate"], data["NecessityRate"], data["FunRate"]))
-    outputs = list(classification)
+    outputs = list(category)
     in_train, in_test, out_train, out_test = sklearn.model_selection.train_test_split(inputs, outputs, test_size=0.01)
 
     model = KNeighborsClassifier(n_neighbors=numNeighbs)
@@ -76,13 +95,105 @@ def runai():
 
     for i in range(len(predicted)):
         actualNeighbours = model.kneighbors([in_test[i]], numNeighbs, True)
-        if classes[predicted[i]] != classes[out_test[i]]:
-            print("Predicted: ", classes[predicted[i]], " on ", in_test[i], classes[out_test[i]])
+        if categories[predicted[i]] != categories[out_test[i]]:
+            print("Predicted: ", categories[predicted[i]], " on ", in_test[i], categories[out_test[i]])
             print("     Neighbours: ", numNeighbs, actualNeighbours)
 
     print("Accuracy: ", acc)
     return
 
 
-csvFile = "choreData.csv"
+def add_chore():
+    print("Choose goal from : ", goalList)
+    goal = input("enter the associated goal: ")
+    goalrow = get_item_from_file(goalFile, goal, "GoalName")
+    g = Goal(goalrow["GoalName"], goalrow["Priority"], goalrow["Notes"])
+    print("Goal Priority: ", g.get_priority())
+    print("Goal Notes: ", g.get_notes(), "\n")
+
+    name = input("enter new Task/Chore name: ")
+    mins = int(input("enter estimated minutes needed for each instance of this task: "))
+    difficulty = int(input("enter estimated difficulty rating: "))
+    necessity = int(input("enter estimated necessity rating: "))
+    fun = int(input("enter estimated fun rating: "))
+    category = input("enter estimated category: ")
+    priority = int(input("enter priority number: "))
+    notes = input("enter notes: ")
+    chore = Chore(name, goal, mins, difficulty, necessity, fun, category, priority, notes)
+
+    chorelist = chore.to_list()
+    add_to_file(choreFile, chorelist)
+    choreList.append(name)
+    print("chore added")
+
+    return
+
+
+def add_goal():
+    name = input("enter new Goal name: ")
+    priority = int(input("enter priority number: "))
+    notes = input("enter notes: ")
+    goal = Goal(name, priority, notes)
+
+    goallist = goal.to_list()
+    add_to_file(goalFile, goallist)
+    goalList.append(name)
+    print("goal added")
+
+    return
+
+
+def add_to_file(file, line):
+    myFile = open(file, 'a')
+    with myFile:
+        writer = csv.writer(myFile)
+        writer.writerows(line)
+    return
+
+
+def get_item_from_file(file, name, column):
+    line = {}
+    myFile = open(file, 'r')
+    with myFile:
+        reader = csv.DictReader(myFile)
+        for row in reader:
+            if name == row[column]:
+                line = row
+
+    return line
+
+
+def get_list_from_file(file, column):
+    itemslist = []
+
+    myFile = open(file, 'r')
+    with myFile:
+        reader = csv.DictReader(myFile)
+        for row in reader:
+            itemslist.append(row[column])
+
+    return itemslist
+
+
+def get_task_by(column, criteria):
+    itemslist = []
+
+    myFile = open(taskFile, 'r')
+    with myFile:
+        reader = csv.DictReader(myFile)
+        for row in reader:
+            if criteria == row[column]:
+                itemslist.append(row)
+
+    return itemslist
+
+
+curr_date = datetime.today().date()
+taskFile = "taskData.csv"
+choreFile = "choreTypes.csv"
+goalFile = "goalTypes.csv"
+goalList = get_list_from_file(goalFile, "GoalName")
+choreList = get_list_from_file(choreFile, "ChoreName")
+todaysTasks = get_task_by("Date", curr_date)
+print(todaysTasks)
 main()

@@ -1,0 +1,9 @@
+TaskName,TaskNum,Date,TimeSpentMins,DifficultyRate,NecessityRate,FunRate,Category,Notes
+Other task,1,2019-12-15,30,1,1,5,NeedLimit,none
+this task,1,2019-12-15,10,1,5,2,NeedReminder,none
+My Task,1,2019-12-15,20,4,4,5,NeedFinish,none
+New task,1,2019-12-15,45,4,5,2,NeedMotivate,none
+this task,1,2019-12-16,20,1,5,2,NeedReminder,none
+New task,1,2019-12-16,45,5,4,1,NeedMotivate,none
+My Task,1,2019-12-16,20,4,4,5,NeedFinish,none
+Other task,1,2019-12-16,30,1,1,5,NeedLimit,none
