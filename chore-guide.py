@@ -1,10 +1,9 @@
-""" get input, output classification """
+""" resume module 4 (about One Hot Encoding), maybe transform minutes spent to be divided by 5 """
 
-import pandas
-import sklearn
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn import preprocessing
+
 import csv
+import chart
+import ai
 from goal import Goal
 from chore import Chore
 from task import Task
@@ -12,27 +11,34 @@ from datetime import datetime
 
 
 def main():
-    print("0 - add a completed task\n",
-          "1 - run the AI\n",
-          "2 - create a new Task/Chore type\n",
-          "3 - create a new Goal type\n")
-    item = int(input("select option: "))
+    stay = True
+    while stay:
+        print("0 - add a completed task\n",
+              "1 - run the AI\n",
+              "2 - create a new Task/Chore type\n",
+              "3 - create a new Goal type\n",
+              "4 - visualize data\n",
+              "5 - exit\n")
+        item = int(input("select option: "))
 
-    if item == 0:
-        get_task_data()
-    elif item == 1:
-        runai()
-    elif item == 2:
-        add_chore()
-    elif item == 3:
-        add_goal()
+        if item == 0:
+            get_task_data()
+        elif item == 1:
+            ai.runai(taskFile)
+        elif item == 2:
+            add_chore()
+        elif item == 3:
+            add_goal()
+        elif item == 4:
+            visualize()
+        elif item == 5:
+            stay = False
 
-    done = input("press any key to exit")
-    print(done)
     return
 
 
 def get_task_data():
+    print("Do not use special characters. They can negatively impact the data.")
     print("Choose task from : ", choreList)
     chore = input("enter the associated chore: ")
     chorerow = get_item_from_file(choreFile, chore, "ChoreName")
@@ -64,46 +70,8 @@ def get_task_data():
     return
 
 
-def runai():
-    data = pandas.read_csv(taskFile)
-    categories = list(data["Category"].unique())
-    numNeighbs = len(categories) + 1
-    """ probably don't need this method for data with many categories or for well-defined categories """
-
-    """ eventually this program should not accept data with less than 2 classifications,
-    which makes the next if statement unnecessary """
-    if numNeighbs < 3:
-        numNeighbs = 3
-
-    if numNeighbs % 2 == 0:
-        numNeighbs = numNeighbs + 1
-    """ maybe there is a more efficient way to do the proceeding if statement """
-
-    encoder = preprocessing.LabelEncoder()
-    category = encoder.fit_transform(list(data["Category"]))
-
-    """ scale TimeSpentMins to be more like the range of the ratings columns """
-    inputs = list(zip(data["TimeSpentMins"], data["DifficultyRate"], data["NecessityRate"], data["FunRate"]))
-    outputs = list(category)
-    in_train, in_test, out_train, out_test = sklearn.model_selection.train_test_split(inputs, outputs, test_size=0.01)
-
-    model = KNeighborsClassifier(n_neighbors=numNeighbs)
-    model.fit(in_train, out_train)
-    acc = model.score(in_test, out_test)
-
-    predicted = model.predict(in_test)
-
-    for i in range(len(predicted)):
-        actualNeighbours = model.kneighbors([in_test[i]], numNeighbs, True)
-        if categories[predicted[i]] != categories[out_test[i]]:
-            print("Predicted: ", categories[predicted[i]], " on ", in_test[i], categories[out_test[i]])
-            print("     Neighbours: ", numNeighbs, actualNeighbours)
-
-    print("Accuracy: ", acc)
-    return
-
-
 def add_chore():
+    print("Do not use special characters. They can negatively impact the data.")
     print("Choose goal from : ", goalList)
     goal = input("enter the associated goal: ")
     goalrow = get_item_from_file(goalFile, goal, "GoalName")
@@ -130,6 +98,7 @@ def add_chore():
 
 
 def add_goal():
+    print("Do not use special characters. They can negatively impact the data.")
     name = input("enter new Goal name: ")
     priority = int(input("enter priority number: "))
     notes = input("enter notes: ")
@@ -139,6 +108,22 @@ def add_goal():
     add_to_file(goalFile, goallist)
     goalList.append(name)
     print("goal added")
+
+    return
+
+
+def visualize():
+    stay = True
+    while stay:
+        print("0 - header rows\n1 - frequencies\n2 - bar\n3 - kde\n4 - kde + histogram\n5 - scatter plot\n6 - contour "
+              "plot (2d density plot)\n7 - box\n8 - violin\n9 - pair-wise scatter plot\n10 - pyplot histogram "
+              "(conditional)\n11 - seaborn regplot (conditional)\n12 - bar sub plot (class separation)\n13 - class "
+              "imbalance\n14 - finished visualizing\n")
+        item = int(input("select option: "))
+        if item == 14:
+            stay = False
+        else:
+            chart.main_menu(item)
 
     return
 
