@@ -1,37 +1,33 @@
-""" resume module 4 (about One Hot Encoding), maybe transform minutes spent to be divided by 5 """
-
-
 import csv
 import chart
-import ai
 from goal import Goal
 from chore import Chore
 from task import Task
+from ai import AI
 from datetime import datetime
 
 
 def main():
+    guide.runai()
     stay = True
+
     while stay:
-        print("0 - add a completed task\n",
-              "1 - run the AI\n",
-              "2 - create a new Task/Chore type\n",
-              "3 - create a new Goal type\n",
-              "4 - visualize data\n",
-              "5 - exit\n")
+        print("\t0 - add a completed task\n",
+              "\t1 - create a new Task/Chore type\n",
+              "\t2 - create a new Goal type\n",
+              "\t3 - visualize data\n",
+              "\t4 - exit\n")
         item = int(input("select option: "))
 
         if item == 0:
             get_task_data()
         elif item == 1:
-            ai.runai(taskFile)
-        elif item == 2:
             add_chore()
-        elif item == 3:
+        elif item == 2:
             add_goal()
-        elif item == 4:
+        elif item == 3:
             visualize()
-        elif item == 5:
+        elif item == 4:
             stay = False
 
     return
@@ -61,9 +57,13 @@ def get_task_data():
     drate = int(input("enter the difficulty rating (1{easy} to 5{difficult}): "))
     nrate = int(input("enter the necessity rating (1{unnecessary} to 5{necessary}): "))
     frate = int(input("enter the fun rating (1{boring} to 5{fun}): "))
-    cat = input("enter the category (NeedMotivate, NeedLimit, NeedReminder, NeedFinish): ")  # get int instead
 
-    task = Task(chore, num, curr_date, timespent, drate, nrate, frate, cat, note)
+    new_task_data = [[timespent, drate, nrate, frate]]
+    cat_num = guide.new_data(new_task_data)
+    cat = catDict.get(cat_num[0])  # gets item[0] because a list is returned
+
+    task = Task(num_tasks, chore, num, curr_date, timespent, drate, nrate, frate, cat, note)
+    print("Please restart application to get current num_tasks.")
     tasklist = task.to_list()
     add_to_file(taskFile, tasklist)
     print("task added")
@@ -173,12 +173,24 @@ def get_task_by(column, criteria):
     return itemslist
 
 
+def get_num_tasks():
+    myFile = open(taskFile, 'r')
+    with myFile:
+        reader = csv.DictReader(myFile)
+        data = list(reader)
+        count = len(data)
+
+    return count
+
+
 curr_date = datetime.today().date()
 taskFile = "taskData.csv"
 choreFile = "choreTypes.csv"
 goalFile = "goalTypes.csv"
 goalList = get_list_from_file(goalFile, "GoalName")
 choreList = get_list_from_file(choreFile, "ChoreName")
-todaysTasks = get_task_by("Date", curr_date)
-print(todaysTasks)
+num_tasks = get_num_tasks()
+catDict = {0: "RM", 1: "LF"}
+numDict = {v: k for k, v in catDict.items()}
+guide = AI(catDict, numDict)
 main()

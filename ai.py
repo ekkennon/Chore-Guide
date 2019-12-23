@@ -1,41 +1,48 @@
 import pandas
-import numpy
+import joblib
 import sklearn
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn import preprocessing
 
 
-cat_cols = ["TaskName", "Category"]
-num_cols = ["TimeSpentMins", "DifficultyRate", "NecessityRate", "FunRate"]
-taskFile = "taskData.csv"
-tasks = pandas.read_csv(taskFile)
+class AI:
+    def __init__(self, cat_dict, num_dict):
+        self.cat_cols = ["TaskName", "Category"]
+        self.num_cols = ["TimeSpentMins", "DifficultyRate", "NecessityRate", "FunRate"]
+        self.taskFile = "taskData.csv"
+        self.tasks = pandas.read_csv(self.taskFile)
+        self.modelFile = "trainedModel.mod"
+        self.catDict = cat_dict
+        self.numDict = num_dict
 
+    def runai(self):
+        numNeighbs = 5
 
-def runai(task_file):
-    numNeighbs = 5
+        labels = []  # list(self.catDict.keys())
+        categories = list(self.tasks["Category"])
+        for item in categories:
+            labels.append(self.numDict.get(item))
 
-    encoder = preprocessing.LabelEncoder()
-    codes = encoder.fit_transform(list(tasks["Category"]))
-    ohe = preprocessing.OneHotEncoder()
-    encoded = ohe.fit_transform(codes.reshape(-1, 1)).toarray()
+        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["NecessityRate"], self.tasks["FunRate"]))
+        feature_train, feature_test, label_train, label_test = sklearn.model_selection.train_test_split(features, labels, test_size=0.01)
 
-    """ scale TimeSpentMins to be more like the range of the ratings columns """
-    features = list(zip(tasks["TimeSpentMins"], tasks["DifficultyRate"], tasks["NecessityRate"], tasks["FunRate"]))
-    labels = list(codes)
-    feature_train, feature_test, label_train, label_test = sklearn.model_selection.train_test_split(features, labels, test_size=0.01)
+        model = KNeighborsClassifier(n_neighbors=numNeighbs)
+        model.fit(feature_train, label_train)
+        joblib.dump(model, open(self.modelFile, 'wb'))
 
-    model = KNeighborsClassifier(n_neighbors=numNeighbs)
-    model.fit(feature_train, label_train)
-    acc = model.score(feature_test, label_test)
+        return
 
-    predicted = model.predict(feature_test)
+    def new_data(self, new_data):
+        model = joblib.load(open(self.modelFile, 'rb'))
+        predicted_value = model.predict(new_data)
+        return predicted_value
 
-    for i in range(len(predicted)):
-        actualNeighbours = model.kneighbors([feature_test[i]], numNeighbs, True)
-        # if codes[predicted[i]] != codes[label_test[i]]:
-        print("Predicted: ", encoder.inverse_transform(codes[predicted[i]].reshape(1)), " (", codes[predicted[i]], ") on ",
-              feature_test[i], encoder.inverse_transform(codes[label_test[i]].reshape(1)), " (", codes[label_test[i]], ")")
-        # print("     Neighbours: ", numNeighbs, actualNeighbours)
+    """
+    def score(self):
+        predicted = model.predict(feature_test)
 
-    print("Accuracy: ", acc)
-    return
+        acc = model.score(feature_test, label_test)
+        fb = metrics.accuracy_score(label_test, predicted)
+
+        print("score: ", fb)
+        print("Accuracy: ", acc)
+        """

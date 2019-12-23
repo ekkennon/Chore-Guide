@@ -1,6 +1,7 @@
 class Task:
     # Task is an instance of a chore
-    def __init__(self, name, num, date, mins, difficulty, necessity, fun, classification, notes):
+    def __init__(self, idx, name, num, date, mins, difficulty, necessity, fun, classification, notes):
+        self.id = idx
         self.name = name
         self.num = num
         self.date = date
@@ -12,5 +13,5 @@ class Task:
         self.notes = notes
 
     def to_list(self):
-        return [[self.name, self.num, self.date, self.mins, self.difficulty, self.necessity, self.fun,
+        return [[self.id, self.name, self.num, self.date, self.mins, self.difficulty, self.necessity, self.fun,
                  self.classification, self.notes]]

@@ -2,7 +2,6 @@ import numpy
 import matplotlib.pyplot as pyplot
 import seaborn
 import pandas
-import IPython.html.widgets
 
 
 tasks = pandas.read_csv("taskData.csv")
