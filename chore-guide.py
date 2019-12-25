@@ -1,14 +1,19 @@
 import csv
+from random import sample
 import chart
+import ai
+import xmlreader
 from goal import Goal
 from chore import Chore
 from task import Task
-from ai import AI
 from datetime import datetime
 
 
 def main():
-    guide.runai()
+    guide.category_model_ai()
+    guide.drate_model_ai()
+    guide.nrate_model_ai()
+    guide.frate_model_ai()
     stay = True
 
     while stay:
@@ -41,6 +46,8 @@ def get_task_data():
     c = Chore(chorerow["ChoreName"], chorerow["Goal"], chorerow["TimeSpent"], chorerow["Difficulty"],
               chorerow["Necessity"], chorerow["Fun"], chorerow["Category"], chorerow["Priority"], chorerow["Notes"])
 
+    taskName = taskDict.get(chore)
+
     print("Estimated Time Taken in Minutes: ", c.get_mins())
     print("Estimated Difficulty Rating: ", c.get_difficulty())
     print("Estimated Necessity Rating: ", c.get_necessity())
@@ -53,14 +60,21 @@ def get_task_data():
     timespent = int(input("enter the approximate time spent in minutes: "))
     note = input("enter notes: ")
 
-    # predict these
-    drate = int(input("enter the difficulty rating (1{easy} to 5{difficult}): "))
-    nrate = int(input("enter the necessity rating (1{unnecessary} to 5{necessary}): "))
-    frate = int(input("enter the fun rating (1{boring} to 5{fun}): "))
+    d = ai.predict("drate", [[timespent, taskName]])
+    drate = int(round(d[0]))
 
-    new_task_data = [[timespent, drate, nrate, frate]]
-    cat_num = guide.new_data(new_task_data)
+    n = ai.predict("nrate", [[timespent, drate, taskName]])
+    nrate = int(round(n[0]))
+
+    f = ai.predict("frate", [[timespent, drate, nrate, taskName]])
+    frate = int(round(f[0]))
+
+    cat_num = ai.predict("category", [[timespent, drate, nrate, frate, taskName]])
     cat = catDict.get(cat_num[0])  # gets item[0] because a list is returned
+
+    q = quote.get_quotes(cat, "general")
+    text = sample(q, 1)
+    print(text[0])
 
     task = Task(num_tasks, chore, num, curr_date, timespent, drate, nrate, frate, cat, note)
     print("Please restart application to get current num_tasks.")
@@ -128,6 +142,11 @@ def visualize():
     return
 
 
+def parse_xml():
+
+    return
+
+
 def add_to_file(file, line):
     myFile = open(file, 'a')
     with myFile:
@@ -183,14 +202,28 @@ def get_num_tasks():
     return count
 
 
+def dict_from_list(col):
+    col_dict = dict.fromkeys(set(col))
+    j = 0
+    for k in col_dict.keys():
+        col_dict[k] = j
+        j = j + 1
+
+    return col_dict
+
+
 curr_date = datetime.today().date()
 taskFile = "taskData.csv"
 choreFile = "choreTypes.csv"
 goalFile = "goalTypes.csv"
 goalList = get_list_from_file(goalFile, "GoalName")
 choreList = get_list_from_file(choreFile, "ChoreName")
+taskDict = dict_from_list(choreList)
+taskAltDict = {v: k for k, v in taskDict.items()}
+numDict = dict_from_list(get_list_from_file(taskFile, "Category"))
+catDict = {v: k for k, v in numDict.items()}
+fileDicts = {"task": taskDict, "taskAlt": taskAltDict, "num": numDict, "cat": catDict}
 num_tasks = get_num_tasks()
-catDict = {0: "RM", 1: "LF"}
-numDict = {v: k for k, v in catDict.items()}
-guide = AI(catDict, numDict)
+guide = ai.AI(fileDicts, taskFile)
+quote = xmlreader.XMLReader()
 main()

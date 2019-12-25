@@ -1,40 +1,111 @@
 import pandas
 import joblib
-import sklearn
+import os
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LinearRegression
+
+
+catModel = "trainedCat.mod"
+dRateModel = "trainedDRate.mod"
+nRateModel = "trainedNRate.mod"
+fRateModel = "trainedFRate.mod"
+
+
+def predict(kind, new_data):
+    file = ""
+    if kind == "category":
+        file = catModel
+    elif kind == "drate":
+        file = dRateModel
+    elif kind == "nrate":
+        file = nRateModel
+    elif kind == "frate":
+        file = fRateModel
+
+    model = joblib.load(open(file, 'rb'))
+    predicted_value = model.predict(new_data)
+    return predicted_value
 
 
 class AI:
-    def __init__(self, cat_dict, num_dict):
+    def __init__(self, file_dicts, tfile):
         self.cat_cols = ["TaskName", "Category"]
         self.num_cols = ["TimeSpentMins", "DifficultyRate", "NecessityRate", "FunRate"]
-        self.taskFile = "taskData.csv"
+        self.taskFile = tfile
         self.tasks = pandas.read_csv(self.taskFile)
-        self.modelFile = "trainedModel.mod"
-        self.catDict = cat_dict
-        self.numDict = num_dict
+        self.catDict = file_dicts["cat"]
+        self.numDict = file_dicts["num"]
+        self.taskDict = file_dicts["task"]
+        self.taskAltDict = file_dicts["taskAlt"]
 
-    def runai(self):
+    def category_model_ai(self):
         numNeighbs = 5
+        labels = []
+        taskNames = []
 
-        labels = []  # list(self.catDict.keys())
-        categories = list(self.tasks["Category"])
-        for item in categories:
+        for item in list(self.tasks["Category"]):
             labels.append(self.numDict.get(item))
 
-        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["NecessityRate"], self.tasks["FunRate"]))
-        feature_train, feature_test, label_train, label_test = sklearn.model_selection.train_test_split(features, labels, test_size=0.01)
+        for item in list(self.tasks["TaskName"]):
+            taskNames.append(self.taskDict.get(item))
+
+        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["NecessityRate"], self.tasks["FunRate"], taskNames))
 
         model = KNeighborsClassifier(n_neighbors=numNeighbs)
-        model.fit(feature_train, label_train)
-        joblib.dump(model, open(self.modelFile, 'wb'))
+        model.fit(features, labels)
+
+        os.remove(catModel)
+        joblib.dump(model, open(catModel, 'wb'))
 
         return
 
-    def new_data(self, new_data):
-        model = joblib.load(open(self.modelFile, 'rb'))
-        predicted_value = model.predict(new_data)
-        return predicted_value
+    def drate_model_ai(self):
+        taskNames = []
+        labels = list(self.tasks["DifficultyRate"])
+
+        for item in list(self.tasks["TaskName"]):
+            taskNames.append(self.taskDict.get(item))
+
+        features = list(zip(self.tasks["TimeSpentMins"], taskNames))
+
+        model = LinearRegression()
+        model.fit(features, labels)
+
+        os.remove(dRateModel)
+        joblib.dump(model, open(dRateModel, 'wb'))
+        return
+
+    def nrate_model_ai(self):
+        taskNames = []
+        labels = list(self.tasks["NecessityRate"])
+
+        for item in list(self.tasks["TaskName"]):
+            taskNames.append(self.taskDict.get(item))
+
+        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], taskNames))
+
+        model = LinearRegression()
+        model.fit(features, labels)
+
+        os.remove(nRateModel)
+        joblib.dump(model, open(nRateModel, 'wb'))
+        return
+
+    def frate_model_ai(self):
+        taskNames = []
+        labels = list(self.tasks["FunRate"])
+
+        for item in list(self.tasks["TaskName"]):
+            taskNames.append(self.taskDict.get(item))
+
+        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["NecessityRate"], taskNames))
+
+        model = LinearRegression()
+        model.fit(features, labels)
+
+        os.remove(fRateModel)
+        joblib.dump(model, open(fRateModel, 'wb'))
+        return
 
     """
     def score(self):
