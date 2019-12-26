@@ -1,27 +1,27 @@
 class Chore:
-    def __init__(self, name, goal, mins, difficulty, necessity, fun, category, priority, notes):
+    def __init__(self, name, goal, mins, necessity, difficulty, fun, category, priority, notes):
         self.name = name
         self.goal = goal
         self.mins = mins
-        self.difficulty = difficulty
         self.necessity = necessity
+        self.difficulty = difficulty
         self.fun = fun
         self.category = category
         self.priority = priority
         self.notes = notes
 
     def to_list(self):
-        return [[self.name, self.goal, self.mins, self.difficulty, self.necessity, self.fun, self.category,
+        return [[self.name, self.goal, self.mins, self.necessity, self.difficulty, self.fun, self.category,
                  self.priority, self.notes]]
 
     def get_mins(self):
         return self.mins
 
-    def get_difficulty(self):
-        return self.difficulty
-
     def get_necessity(self):
         return self.necessity
+
+    def get_difficulty(self):
+        return self.difficulty
 
     def get_fun(self):
         return self.fun

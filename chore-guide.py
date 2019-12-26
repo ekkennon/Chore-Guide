@@ -11,8 +11,8 @@ from datetime import datetime
 
 def main():
     guide.category_model_ai()
-    guide.drate_model_ai()
     guide.nrate_model_ai()
+    guide.drate_model_ai()
     guide.frate_model_ai()
     stay = True
 
@@ -43,8 +43,8 @@ def get_task_data():
     print("Choose task from : ", choreList)
     chore = input("enter the associated chore: ")
     chorerow = get_item_from_file(choreFile, chore, "ChoreName")
-    c = Chore(chorerow["ChoreName"], chorerow["Goal"], chorerow["TimeSpent"], chorerow["Difficulty"],
-              chorerow["Necessity"], chorerow["Fun"], chorerow["Category"], chorerow["Priority"], chorerow["Notes"])
+    c = Chore(chorerow["ChoreName"], chorerow["Goal"], chorerow["TimeSpent"], chorerow["Necessity"], chorerow["Difficulty"],
+              chorerow["Fun"], chorerow["Category"], chorerow["Priority"], chorerow["Notes"])
 
     taskName = taskDict.get(chore)
 
@@ -52,28 +52,28 @@ def get_task_data():
     print("Chore Notes: ", c.get_notes(), "\n")
 
     num = 1  # int(input("enter task number: "))  # need to track and generate this
-    priority = c.get_priority()
+    priority = int(c.get_priority())
 
     timespent = int(input("enter the approximate time spent in minutes: "))
     note = input("enter notes: ")
 
-    d = ai.predict("drate", [[timespent, taskName]])
-    drate = int(round(d[0]))
-
-    n = ai.predict("nrate", [[timespent, drate, taskName]])
+    n = ai.predict("nrate", [[timespent, priority, taskName]])
     nrate = int(round(n[0]))
 
-    f = ai.predict("frate", [[timespent, drate, nrate, taskName]])
+    d = ai.predict("drate", [[timespent, nrate, priority, taskName]])
+    drate = int(round(d[0]))
+
+    f = ai.predict("frate", [[timespent, nrate, drate, priority, taskName]])
     frate = int(round(f[0]))
 
-    cat_num = ai.predict("category", [[timespent, drate, nrate, frate, taskName]])
+    cat_num = ai.predict("category", [[timespent, nrate, drate, frate, priority, taskName]])
     cat = catDict.get(cat_num[0])  # gets item[0] because a list is returned
 
     q = quote.get_quotes(cat, "general")
     text = sample(q, 1)
     print(text[0])
 
-    task = Task(num_tasks, chore, num, curr_date, timespent, drate, nrate, frate, cat, priority, note)
+    task = Task(num_tasks, chore, num, curr_date, timespent, nrate, drate, frate, cat, priority, note)
     print("Please restart application to get current num_tasks.")
     tasklist = task.to_list()
     add_to_file(taskFile, tasklist)
@@ -92,13 +92,13 @@ def add_chore():
 
     name = input("enter new Task/Chore name: ")
     mins = int(input("enter estimated minutes needed for each instance of this task: "))
-    difficulty = int(input("enter estimated difficulty rating: "))
     necessity = int(input("enter estimated necessity rating: "))
+    difficulty = int(input("enter estimated difficulty rating: "))
     fun = int(input("enter estimated fun rating: "))
     category = input("enter estimated category: ")
     priority = int(input("enter estimated priority number: "))
     notes = input("enter notes: ")
-    chore = Chore(name, goal, mins, difficulty, necessity, fun, category, priority, notes)
+    chore = Chore(name, goal, mins, necessity, difficulty, fun, category, priority, notes)
 
     chorelist = chore.to_list()
     add_to_file(choreFile, chorelist)

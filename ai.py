@@ -6,8 +6,8 @@ from sklearn.linear_model import LinearRegression
 
 
 catModel = "trainedCat.mod"
-dRateModel = "trainedDRate.mod"
 nRateModel = "trainedNRate.mod"
+dRateModel = "trainedDRate.mod"
 fRateModel = "trainedFRate.mod"
 
 
@@ -15,10 +15,10 @@ def predict(kind, new_data):
     file = ""
     if kind == "category":
         file = catModel
-    elif kind == "drate":
-        file = dRateModel
     elif kind == "nrate":
         file = nRateModel
+    elif kind == "drate":
+        file = dRateModel
     elif kind == "frate":
         file = fRateModel
 
@@ -30,7 +30,7 @@ def predict(kind, new_data):
 class AI:
     def __init__(self, file_dicts, tfile):
         self.cat_cols = ["TaskName", "Category"]
-        self.num_cols = ["TimeSpentMins", "DifficultyRate", "NecessityRate", "FunRate"]
+        self.num_cols = ["TimeSpentMins", "NecessityRate", "DifficultyRate", "FunRate"]
         self.taskFile = tfile
         self.tasks = pandas.read_csv(self.taskFile)
         self.catDict = file_dicts["cat"]
@@ -49,7 +49,7 @@ class AI:
         for item in list(self.tasks["TaskName"]):
             taskNames.append(self.taskDict.get(item))
 
-        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["NecessityRate"],
+        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["NecessityRate"], self.tasks["DifficultyRate"],
                             self.tasks["FunRate"], self.tasks["Priority"], taskNames))
 
         model = KNeighborsClassifier(n_neighbors=numNeighbs)
@@ -60,9 +60,9 @@ class AI:
 
         return
 
-    def drate_model_ai(self):
+    def nrate_model_ai(self):
         taskNames = []
-        labels = list(self.tasks["DifficultyRate"])
+        labels = list(self.tasks["NecessityRate"])
 
         for item in list(self.tasks["TaskName"]):
             taskNames.append(self.taskDict.get(item))
@@ -72,24 +72,24 @@ class AI:
         model = LinearRegression()
         model.fit(features, labels)
 
-        os.remove(dRateModel)
-        joblib.dump(model, open(dRateModel, 'wb'))
+        os.remove(nRateModel)
+        joblib.dump(model, open(nRateModel, 'wb'))
         return
 
-    def nrate_model_ai(self):
+    def drate_model_ai(self):
         taskNames = []
-        labels = list(self.tasks["NecessityRate"])
+        labels = list(self.tasks["DifficultyRate"])
 
         for item in list(self.tasks["TaskName"]):
             taskNames.append(self.taskDict.get(item))
 
-        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["Priority"], taskNames))
+        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["NecessityRate"], self.tasks["Priority"], taskNames))
 
         model = LinearRegression()
         model.fit(features, labels)
 
-        os.remove(nRateModel)
-        joblib.dump(model, open(nRateModel, 'wb'))
+        os.remove(dRateModel)
+        joblib.dump(model, open(dRateModel, 'wb'))
         return
 
     def frate_model_ai(self):
@@ -99,7 +99,7 @@ class AI:
         for item in list(self.tasks["TaskName"]):
             taskNames.append(self.taskDict.get(item))
 
-        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["NecessityRate"],
+        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["NecessityRate"], self.tasks["DifficultyRate"],
                             self.tasks["Priority"], taskNames))
 
         model = LinearRegression()
