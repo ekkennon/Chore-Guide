@@ -49,7 +49,8 @@ class AI:
         for item in list(self.tasks["TaskName"]):
             taskNames.append(self.taskDict.get(item))
 
-        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["NecessityRate"], self.tasks["FunRate"], taskNames))
+        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["NecessityRate"],
+                            self.tasks["FunRate"], self.tasks["Priority"], taskNames))
 
         model = KNeighborsClassifier(n_neighbors=numNeighbs)
         model.fit(features, labels)
@@ -66,7 +67,7 @@ class AI:
         for item in list(self.tasks["TaskName"]):
             taskNames.append(self.taskDict.get(item))
 
-        features = list(zip(self.tasks["TimeSpentMins"], taskNames))
+        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["Priority"], taskNames))
 
         model = LinearRegression()
         model.fit(features, labels)
@@ -82,7 +83,7 @@ class AI:
         for item in list(self.tasks["TaskName"]):
             taskNames.append(self.taskDict.get(item))
 
-        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], taskNames))
+        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["Priority"], taskNames))
 
         model = LinearRegression()
         model.fit(features, labels)
@@ -98,7 +99,8 @@ class AI:
         for item in list(self.tasks["TaskName"]):
             taskNames.append(self.taskDict.get(item))
 
-        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["NecessityRate"], taskNames))
+        features = list(zip(self.tasks["TimeSpentMins"], self.tasks["DifficultyRate"], self.tasks["NecessityRate"],
+                            self.tasks["Priority"], taskNames))
 
         model = LinearRegression()
         model.fit(features, labels)

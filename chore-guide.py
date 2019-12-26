@@ -49,13 +49,10 @@ def get_task_data():
     taskName = taskDict.get(chore)
 
     print("Estimated Time Taken in Minutes: ", c.get_mins())
-    print("Estimated Difficulty Rating: ", c.get_difficulty())
-    print("Estimated Necessity Rating: ", c.get_necessity())
-    print("Estimated Fun Rating: ", c.get_fun())
-    print("Predicted Category: ", c.get_category())
     print("Chore Notes: ", c.get_notes(), "\n")
 
     num = 1  # int(input("enter task number: "))  # need to track and generate this
+    priority = c.get_priority()
 
     timespent = int(input("enter the approximate time spent in minutes: "))
     note = input("enter notes: ")
@@ -76,7 +73,7 @@ def get_task_data():
     text = sample(q, 1)
     print(text[0])
 
-    task = Task(num_tasks, chore, num, curr_date, timespent, drate, nrate, frate, cat, note)
+    task = Task(num_tasks, chore, num, curr_date, timespent, drate, nrate, frate, cat, priority, note)
     print("Please restart application to get current num_tasks.")
     tasklist = task.to_list()
     add_to_file(taskFile, tasklist)
@@ -99,7 +96,7 @@ def add_chore():
     necessity = int(input("enter estimated necessity rating: "))
     fun = int(input("enter estimated fun rating: "))
     category = input("enter estimated category: ")
-    priority = int(input("enter priority number: "))
+    priority = int(input("enter estimated priority number: "))
     notes = input("enter notes: ")
     chore = Chore(name, goal, mins, difficulty, necessity, fun, category, priority, notes)
 
@@ -138,11 +135,6 @@ def visualize():
             stay = False
         else:
             chart.main_menu(item)
-
-    return
-
-
-def parse_xml():
 
     return
 

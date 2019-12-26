@@ -29,5 +29,8 @@ class Chore:
     def get_category(self):
         return self.category
 
+    def get_priority(self):
+        return self.priority
+
     def get_notes(self):
         return self.notes
