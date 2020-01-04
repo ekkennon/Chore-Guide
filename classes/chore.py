@@ -15,22 +15,22 @@ class Chore:
                  self.priority, self.notes]]
 
     def get_mins(self):
-        return self.mins
+        return int(self.mins)
 
     def get_necessity(self):
-        return self.necessity
+        return int(self.necessity)
 
     def get_difficulty(self):
-        return self.difficulty
+        return int(self.difficulty)
 
     def get_fun(self):
-        return self.fun
+        return int(self.fun)
 
     def get_category(self):
         return self.category
 
     def get_priority(self):
-        return self.priority
+        return int(self.priority)
 
     def get_notes(self):
         return self.notes

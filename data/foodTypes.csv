@@ -1,0 +1,4 @@
+ID,FoodName,PyramidType,HealthType,FlavorType,Notes
+1,Water,water,healthy,neither,none
+2,Fresh Fruit,fruit,healthy,sweet,none
+3,Chips,junk,treat,savory,none

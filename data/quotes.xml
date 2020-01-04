@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <quotes>
-    <RM>
-        <q type="general">Please do this task!</q>
-        <q type="general" alttype="schedule">Do this task before ...</q>
+    <Reminder>
         <q type="general">You need to do this task.</q>
         <q type="general">Have you done this task yet?</q>
-    </RM>
-    <LF>
+    </Reminder>
+    <Motivate>
+        <q type="general">Please do this task!</q>
+        <q type="general" alttype="schedule">Do this task before ...</q>
+    </Motivate>
+    <Limit>
         <q type="general">It is advisable that you do this task after a difficult but necessary task.</q>
+    </Limit>
+    <Finish>
         <q type="general">Keep up the good work!</q>
-    </LF>
+    </Finish>
 </quotes>
