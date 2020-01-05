@@ -150,59 +150,88 @@ def visualize():
 
 
 def get_tasks(days):
+    # make array of relevant days
     pastWeek = [today]
     while days > 0:
         days = days - 1
         pastWeek.append(get_date(days))
 
-    priorityDict = {1: 5, 2: 3, 3: 1}
+    # get tasks completed within [pastWeek]
     taskList = get_list_from_file(taskFile, "all")
     tl = taskLookup.TaskLookup()
-
     listByDate = tl.get_by_date(taskList, pastWeek)
-    dictByType = {}
-    goalDict = dict.fromkeys(goalList, 0.0)
 
     # calculate progress for each goal and each chore type
+    # variables
+    dictByType = {}
+    priorityDict = {1: 5, 2: 3, 3: 1}
+    goalDict = dict.fromkeys(goalList, 0.0)
+
     for chore in choreList:
+        # task progress
         chorerow = get_item_from_file(choreFile, chore, "ChoreName")
         pscore = tl.get_progress_score(tl.get_task_progress(tl.get_by_type(listByDate, chore)))
         score2 = round((pscore / len(pastWeek)) / priorityDict[int(chorerow["Priority"])], 1)
         dictByType[chore] = score2
 
+        # goal progress
         goal = chorerow["Goal"]
         a = goalDict[goal] + score2
         goalDict[goal] = a
 
-    lowest_tasks = []
-    lowest_goals = []
-    ltscores = nsmallest(3, list(dictByType.values()))
-    ldscores = nsmallest(3, list(goalDict.values()))
+    # while len(list(dictByType.values)) > len(set(dictByType.values)):
 
+    # find 3 tasks that need the most progress
+    ltscores = nsmallest(1, list(dictByType.values()))
+    lowest_tasks = []
     for li in dictByType:
         if dictByType[li] in ltscores:
             lowest_tasks.append(li)
 
+    # find 3 goals that need the most progress
+    lgscores = nsmallest(3, list(goalDict.values()))
+    lowest_goals = []
     for li in goalDict:
-        if goalDict[li] in ldscores:
+        if goalDict[li] in lgscores:
             lowest_goals.append(li)
 
-    while len(lowest_tasks) > 3:
-        pd = {}
+    """
+    # make sure only 3 tasks are in list
+    removed = True
+    while len(lowest_tasks) > 3 and removed is True:
+        removed = False
         for i in dictByType:
             chorerow = get_item_from_file(choreFile, i, "ChoreName")
-            pd[chorerow["ChoreName"]] = chorerow["Priority"]
-
+            if chorerow["Priority"] == 3 and chorerow["ChoreName"] in lowest_tasks:
+                lowest_tasks.remove(chorerow["ChoreName"])
+                removed = True
+            elif chorerow["Priority"] == 2 and chorerow["ChoreName"] in lowest_tasks:
+                lowest_tasks.remove(chorerow["ChoreName"])
+                removed = True
+            elif chorerow["Priority"] == 1 and chorerow["ChoreName"] in lowest_tasks:
+                lowest_tasks.remove(chorerow["ChoreName"])
+                removed = True
+    
+    # make sure only 3 goals are in list
     while len(lowest_goals) > 3:
-        pd = {}
         for i in goalDict:
             goalrow = get_item_from_file(goalFile, i, "GoalName")
-            pd[goalrow["GoalName"]] = goalrow["Priority"]
+            if goalrow["Priority"] == 3 and goalrow["GoalName"] in lowest_goals:
+                lowest_goals.remove(goalrow["GoalName"])
+            if goalrow["Priority"] == 2 and goalrow["GoalName"] in lowest_goals:
+                lowest_goals.remove(goalrow["GoalName"])
 
     final_list = []
+    while len(final_list) < 3:
+        for i in lowest_tasks:
+            chorerow = get_item_from_file(choreFile, i, "ChoreName")
+            if chorerow["Goal"] in goalDict:
+                final_list.append(chorerow["ChoreName"])
+            break
+    """
 
-    # get progress score for each goal (add chore type progress scores for same goal)
-    # keep 3 goals with the lowest progress scores
+    print("You should do ", lowest_tasks[0])
+
     # any chore type with its goal listed should definitely be included
     # for remaining spots find lowest out of remaining goals and chore types
     # if chore type is in remaining lowest those should definitely be included
