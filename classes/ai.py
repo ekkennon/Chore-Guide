@@ -3,7 +3,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 class AI:
-    def __init__(self, file_dicts, tasks, cat_model, n_rate_model, d_rate_model, f_rate_model, neighbours=5):
+    def __init__(self, file_dicts, tasks, n_rate_model, d_rate_model, f_rate_model, cat_model, neighbours=5):
         self.cat_cols = ["TaskName", "Category"]
         self.num_cols = ["TimeSpentMins", "NecessityRate", "DifficultyRate", "FunRate"]
         self.tasks = tasks
@@ -11,33 +11,15 @@ class AI:
         self.catDict = file_dicts["cat"]
         self.taskDict = file_dicts["task"]
         self.taskNumDict = file_dicts["taskNum"]
-        self.catModel = cat_model
         self.nRateModel = n_rate_model
         self.dRateModel = d_rate_model
         self.fRateModel = f_rate_model
+        self.catModel = cat_model
         self.numNeighbs = neighbours
-
-    def category_model_ai(self):
-        labels = []
-
-        # from sklearn import preprocessing
-        # le_cat = preprocessing.LabelEncoder()
-        # le_cat.fit(["NeedReminder", "NeedLimit", "NeedMotivate", "NeedFinish"])
-        # self.tasks["Category"] = le_cat.transform(self.tasks["Category"])
-
-        for item in list(self.tasks["Category"]):
-            labels.append(self.numDict.get(item))
-
-        features = list(zip(self.tasks["NecessityRate"], self.tasks["DifficultyRate"], self.tasks["FunRate"]))
-
-        model = DecisionTreeClassifier(criterion="entropy", max_depth=4)
-        model.fit(features, labels)
-        self.catModel = model
-
-        return
 
     def nrate_model_ai(self):
         taskNames = []
+
         labels = list(self.tasks["NecessityRate"])
 
         for item in list(self.tasks["TaskName"]):
@@ -79,6 +61,25 @@ class AI:
         model = KNeighborsClassifier(n_neighbors=self.numNeighbs)
         model.fit(features, labels)
         self.fRateModel = model
+
+        return
+
+    def category_model_ai(self):
+        labels = []
+
+        # from sklearn import preprocessing
+        # le_cat = preprocessing.LabelEncoder()
+        # le_cat.fit(["NeedReminder", "NeedLimit", "NeedMotivate", "NeedFinish"])
+        # self.tasks["Category"] = le_cat.transform(self.tasks["Category"])
+
+        for item in list(self.tasks["Category"]):
+            labels.append(self.numDict.get(item))
+
+        features = list(zip(self.tasks["NecessityRate"], self.tasks["DifficultyRate"], self.tasks["FunRate"]))
+
+        model = DecisionTreeClassifier(criterion="entropy")
+        model.fit(features, labels)
+        self.catModel = model
 
         return
 

@@ -11,8 +11,7 @@ class Chore:
         self.notes = notes
 
     def to_list(self):
-        return [[self.name, self.goal, self.mins, self.necessity, self.difficulty, self.fun, self.category,
-                 self.priority, self.notes]]
+        return [[self.name, self.goal, self.mins, self.necessity, self.difficulty, self.fun, self.category, self.priority, self.notes]]
 
     def get_mins(self):
         return int(self.mins)

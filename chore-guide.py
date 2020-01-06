@@ -14,19 +14,6 @@ from random import sample
 
 
 def main():
-    os.remove(nRateModelFile)
-    os.remove(dRateModelFile)
-    os.remove(fRateModelFile)
-    os.remove(catModelFile)
-    guide.nrate_model_ai()
-    guide.drate_model_ai()
-    guide.frate_model_ai()
-    guide.category_model_ai()
-    joblib.dump(guide.nRateModel, open(nRateModelFile, 'wb'))
-    joblib.dump(guide.dRateModel, open(dRateModelFile, 'wb'))
-    joblib.dump(guide.fRateModel, open(fRateModelFile, 'wb'))
-    joblib.dump(guide.catModel, open(catModelFile, 'wb'))
-
     stay = True
     while stay:
         print("\t0 - add a completed task\n",
@@ -66,27 +53,27 @@ def get_task_data():
     print("Estimated Time Taken in Minutes: ", c.get_mins())
     print("Chore Notes: ", c.get_notes(), "\n")
 
-    num = 1  # int(input("enter task number: "))  # need to track and generate this
-    priority = c.get_priority()
-
     timespent = int(input("enter the approximate time spent in minutes: "))
     note = input("enter notes: ")
 
-    progress = round(timespent/c.get_mins(), 1)
+    num = 1  # int(input("enter task number: "))  # need to track and generate this
+    priority = c.get_priority()
+    progress = round(timespent / c.get_mins(), 1)
 
+    guide = remake_model_files()
     nrate = guide.predict("nrate", [[timespent, priority, taskName]])[0]
     drate = guide.predict("drate", [[timespent, nrate, priority, taskName]])[0]
     frate = guide.predict("frate", [[timespent, nrate, drate, priority, taskName]])[0]
     cnum = guide.predict("category", [[nrate, drate, frate]])[0]
     cat = catDict.get(cnum)
-    task = Task(get_num_tasks(), chore, num, today, timespent, nrate, drate, frate, cat, priority, progress, note)
 
-    quotes = get_quotes(cat, "general")
-    text = sample(quotes, 1)
-    print(text[0])
-
+    task = Task(len(tasks), chore, num, get_date(0), timespent, nrate, drate, frate, cat, priority, progress, note)
     tasklist = task.to_list()
     add_to_file(taskFile, tasklist)
+
+    quotes = get_quotes(cat, "general")
+    quote = sample(quotes, 1)
+    print(quote[0].text)
     print("task added")
     return
 
@@ -151,8 +138,8 @@ def visualize():
 
 def get_tasks(days):
     # make array of relevant days
-    pastWeek = [today]
-    while days > 0:
+    pastWeek = []
+    while days > -1:
         days = days - 1
         pastWeek.append(get_date(days))
 
@@ -164,8 +151,8 @@ def get_tasks(days):
     # calculate progress for each goal and each chore type
     # variables
     dictByType = {}
-    priorityDict = {1: 5, 2: 3, 3: 1}
     goalDict = dict.fromkeys(goalList, 0.0)
+    priorityDict = {1: 5, 2: 3, 3: 1}
 
     for chore in choreList:
         # task progress
@@ -179,58 +166,21 @@ def get_tasks(days):
         a = goalDict[goal] + score2
         goalDict[goal] = a
 
-    # while len(list(dictByType.values)) > len(set(dictByType.values)):
-
-    # find 3 tasks that need the most progress
+    # find tasks that need the most progress
     ltscores = nsmallest(1, list(dictByType.values()))
     lowest_tasks = []
     for li in dictByType:
         if dictByType[li] in ltscores:
             lowest_tasks.append(li)
 
-    # find 3 goals that need the most progress
+    # find goals that need the most progress
     lgscores = nsmallest(3, list(goalDict.values()))
     lowest_goals = []
     for li in goalDict:
         if goalDict[li] in lgscores:
             lowest_goals.append(li)
 
-    """
-    # make sure only 3 tasks are in list
-    removed = True
-    while len(lowest_tasks) > 3 and removed is True:
-        removed = False
-        for i in dictByType:
-            chorerow = get_item_from_file(choreFile, i, "ChoreName")
-            if chorerow["Priority"] == 3 and chorerow["ChoreName"] in lowest_tasks:
-                lowest_tasks.remove(chorerow["ChoreName"])
-                removed = True
-            elif chorerow["Priority"] == 2 and chorerow["ChoreName"] in lowest_tasks:
-                lowest_tasks.remove(chorerow["ChoreName"])
-                removed = True
-            elif chorerow["Priority"] == 1 and chorerow["ChoreName"] in lowest_tasks:
-                lowest_tasks.remove(chorerow["ChoreName"])
-                removed = True
-    
-    # make sure only 3 goals are in list
-    while len(lowest_goals) > 3:
-        for i in goalDict:
-            goalrow = get_item_from_file(goalFile, i, "GoalName")
-            if goalrow["Priority"] == 3 and goalrow["GoalName"] in lowest_goals:
-                lowest_goals.remove(goalrow["GoalName"])
-            if goalrow["Priority"] == 2 and goalrow["GoalName"] in lowest_goals:
-                lowest_goals.remove(goalrow["GoalName"])
-
-    final_list = []
-    while len(final_list) < 3:
-        for i in lowest_tasks:
-            chorerow = get_item_from_file(choreFile, i, "ChoreName")
-            if chorerow["Goal"] in goalDict:
-                final_list.append(chorerow["ChoreName"])
-            break
-    """
-
-    print("You should do ", lowest_tasks[0])
+    print("You should do ", lowest_tasks)
 
     # any chore type with its goal listed should definitely be included
     # for remaining spots find lowest out of remaining goals and chore types
@@ -275,16 +225,6 @@ def get_list_from_file(file, column):
     return itemslist
 
 
-def get_num_tasks():
-    myFile = open(taskFile, 'r')
-    with myFile:
-        reader = csv.DictReader(myFile)
-        data = list(reader)
-        count = len(data)
-
-    return count
-
-
 def dict_from_list(col):
     col_dict = dict.fromkeys(set(col))
     j = 0
@@ -302,32 +242,65 @@ def get_date(days):
 
 
 def get_quotes(style, subtype):
-    tree = ElementTree.parse(quoteFile).getroot()
+    tree = ElementTree.parse("data/quotes.xml").getroot()
     quote_tree = tree.find(style)
     quote_list = quote_tree.findall("./q/[@type='" + subtype + "']")
     return quote_list
 
 
-today = get_date(0)
+def remake_model_files():
+    catModelFile = "saved-models/trainedCat.mod"
+    nRateModelFile = "saved-models/trainedNRate.mod"
+    dRateModelFile = "saved-models/trainedDRate.mod"
+    fRateModelFile = "saved-models/trainedFRate.mod"
+
+    if os.path.exists(nRateModelFile):
+        nmodel = joblib.load(open(nRateModelFile, 'rb'))
+        os.remove(nRateModelFile)
+    else:
+        nmodel = ""
+        print("n model file does not exist, please close program.")
+    if os.path.exists(dRateModelFile):
+        dmodel = joblib.load(open(dRateModelFile, 'rb'))
+        os.remove(dRateModelFile)
+    else:
+        dmodel = ""
+        print("d model file does not exist, please close program.")
+    if os.path.exists(fRateModelFile):
+        fmodel = joblib.load(open(fRateModelFile, 'rb'))
+        os.remove(fRateModelFile)
+    else:
+        fmodel = ""
+        print("f model file does not exist, please close program.")
+    if os.path.exists(catModelFile):
+        cmodel = joblib.load(open(catModelFile, 'rb'))
+        os.remove(catModelFile)
+    else:
+        cmodel = ""
+        print("c model file does not exist, please close program.")
+
+    guide = ai.AI(fileDicts, tasks, nmodel, dmodel, fmodel, cmodel)
+    guide.nrate_model_ai()
+    guide.drate_model_ai()
+    guide.frate_model_ai()
+    guide.category_model_ai()
+    joblib.dump(guide.nRateModel, open(nRateModelFile, 'wb'))
+    joblib.dump(guide.dRateModel, open(dRateModelFile, 'wb'))
+    joblib.dump(guide.fRateModel, open(fRateModelFile, 'wb'))
+    joblib.dump(guide.catModel, open(catModelFile, 'wb'))
+
+    return guide
+
+
 taskFile = "data/taskData.csv"
 choreFile = "data/choreTypes.csv"
 goalFile = "data/goalTypes.csv"
-quoteFile = "data/quotes.xml"
-catModelFile = "saved-models/trainedCat.mod"
-nRateModelFile = "saved-models/trainedNRate.mod"
-dRateModelFile = "saved-models/trainedDRate.mod"
-fRateModelFile = "saved-models/trainedFRate.mod"
 goalList = get_list_from_file(goalFile, "GoalName")
 choreList = get_list_from_file(choreFile, "ChoreName")
-nmodel = joblib.load(open(nRateModelFile, 'rb'))
-dmodel = joblib.load(open(dRateModelFile, 'rb'))
-fmodel = joblib.load(open(fRateModelFile, 'rb'))
-cmodel = joblib.load(open(catModelFile, 'rb'))
 taskNumDict = dict_from_list(choreList)
 taskNameDict = {v: k for k, v in taskNumDict.items()}
 numDict = dict_from_list(get_list_from_file(taskFile, "Category"))
 catDict = {v: k for k, v in numDict.items()}
 fileDicts = {"task": taskNameDict, "taskNum": taskNumDict, "num": numDict, "cat": catDict}
 tasks = pandas.read_csv(taskFile)
-guide = ai.AI(fileDicts, tasks, cmodel, nmodel, dmodel, fmodel)
 main()
