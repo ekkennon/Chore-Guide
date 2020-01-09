@@ -45,10 +45,11 @@ def get_task_data():
     print("Choose task from : ", choreList)
     chore = input("enter the associated chore: ")
     chorerow = get_item_from_file(choreFile, chore, "ChoreName")
+
     c = Chore(chorerow["ChoreName"], chorerow["Goal"], chorerow["TimeSpent"], chorerow["Necessity"], chorerow["Difficulty"],
               chorerow["Fun"], chorerow["Category"], chorerow["Priority"], chorerow["Notes"])
 
-    taskName = taskNumDict.get(chore)
+    taskNum = taskNumDict.get(chore)
 
     print("Estimated Time Taken in Minutes: ", c.get_mins())
     print("Chore Notes: ", c.get_notes(), "\n")
@@ -61,9 +62,16 @@ def get_task_data():
     progress = round(timespent / c.get_mins(), 1)
 
     guide = remake_model_files()
-    nrate = guide.predict("nrate", [[timespent, priority, taskName]])[0]
-    drate = guide.predict("drate", [[timespent, nrate, priority, taskName]])[0]
-    frate = guide.predict("frate", [[timespent, nrate, drate, priority, taskName]])[0]
+
+    nec = guide.predict("nrate", [[timespent, priority, taskNum]])[0]
+    nrate = int(input("The predicted Necessity Rating is " + str(nec) + ". Enter correct Necessity: "))
+
+    dif = guide.predict("drate", [[timespent, nrate, priority, taskNum]])[0]
+    drate = int(input("The predicted Difficulty Rating is " + str(dif) + ". Enter correct Difficulty: "))
+
+    fun = guide.predict("frate", [[timespent, nrate, drate, priority, taskNum]])[0]
+    frate = int(input("The predicted Fun Rating is " + str(fun) + ". Enter correct Fun: "))
+
     cnum = guide.predict("category", [[nrate, drate, frate]])[0]
     cat = catDict.get(cnum)
 
@@ -75,6 +83,23 @@ def get_task_data():
     quote = sample(quotes, 1)
     print(quote[0].text)
     print("task added")
+
+    if not timespent == c.get_mins():
+        tsaverage = (timespent + c.get_mins()) / 2
+        print("The average TimeSpent for this task is ", tsaverage)
+
+    if not nrate == c.get_necessity():
+        naverage = (nrate + c.get_necessity()) / 2
+        print("The average Necessity for this task is ", naverage)
+
+    if not drate == c.get_difficulty():
+        daverage = (drate + c.get_difficulty()) / 2
+        print("The average Difficulty for this task is ", daverage)
+
+    if not frate == c.get_fun():
+        faverage = (frate + c.get_fun()) / 2
+        print("The average Fun for this task is ", faverage)
+
     return
 
 
@@ -147,6 +172,7 @@ def get_tasks(days):
     taskList = get_list_from_file(taskFile, "all")
     tl = taskLookup.TaskLookup()
     listByDate = tl.get_by_date(taskList, pastWeek)
+    todaysCompleted = tl.get_itemslist(tl.get_by_date(taskList, [get_date(0)]))
 
     # calculate progress for each goal and each chore type
     # variables
@@ -155,11 +181,13 @@ def get_tasks(days):
     priorityDict = {1: 5, 2: 3, 3: 1}
 
     for chore in choreList:
-        # task progress
         chorerow = get_item_from_file(choreFile, chore, "ChoreName")
         pscore = tl.get_progress_score(tl.get_task_progress(tl.get_by_type(listByDate, chore)))
         score2 = round((pscore / len(pastWeek)) / priorityDict[int(chorerow["Priority"])], 1)
-        dictByType[chore] = score2
+
+        if chore not in todaysCompleted:
+            # save task progress
+            dictByType[chore] = score2
 
         # goal progress
         goal = chorerow["Goal"]
@@ -255,31 +283,47 @@ def remake_model_files():
     fRateModelFile = "saved-models/trainedFRate.mod"
 
     if os.path.exists(nRateModelFile):
-        nmodel = joblib.load(open(nRateModelFile, 'rb'))
+        try:
+            nmodel = joblib.load(open(nRateModelFile, 'rb'))
+        except ModuleNotFoundError:
+            nmodel = ""
+            print("n model file error, does not exist, please close program.")
         os.remove(nRateModelFile)
     else:
         nmodel = ""
         print("n model file does not exist, please close program.")
     if os.path.exists(dRateModelFile):
-        dmodel = joblib.load(open(dRateModelFile, 'rb'))
+        try:
+            dmodel = joblib.load(open(dRateModelFile, 'rb'))
+        except ModuleNotFoundError:
+            dmodel = ""
+            print("d model file error, does not exist, please close program.")
         os.remove(dRateModelFile)
     else:
         dmodel = ""
         print("d model file does not exist, please close program.")
     if os.path.exists(fRateModelFile):
-        fmodel = joblib.load(open(fRateModelFile, 'rb'))
+        try:
+            fmodel = joblib.load(open(fRateModelFile, 'rb'))
+        except ModuleNotFoundError:
+            fmodel = ""
+            print("f model file error, does not exist, please close program.")
         os.remove(fRateModelFile)
     else:
         fmodel = ""
         print("f model file does not exist, please close program.")
     if os.path.exists(catModelFile):
-        cmodel = joblib.load(open(catModelFile, 'rb'))
+        try:
+            cmodel = joblib.load(open(catModelFile, 'rb'))
+        except ModuleNotFoundError:
+            cmodel = ""
+            print("c model file error, does not exist, please close program.")
         os.remove(catModelFile)
     else:
         cmodel = ""
         print("c model file does not exist, please close program.")
 
-    guide = ai.AI(fileDicts, tasks, nmodel, dmodel, fmodel, cmodel)
+    guide = ai.AI(fileDicts, tasks, chores, nmodel, dmodel, fmodel, cmodel)
     guide.nrate_model_ai()
     guide.drate_model_ai()
     guide.frate_model_ai()
@@ -303,4 +347,5 @@ numDict = dict_from_list(get_list_from_file(taskFile, "Category"))
 catDict = {v: k for k, v in numDict.items()}
 fileDicts = {"task": taskNameDict, "taskNum": taskNumDict, "num": numDict, "cat": catDict}
 tasks = pandas.read_csv(taskFile)
+chores = pandas.read_csv(choreFile)
 main()

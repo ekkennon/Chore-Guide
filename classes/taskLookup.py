@@ -42,3 +42,11 @@ class TaskLookup:
             score = score + float(p)
 
         return score
+
+    def get_itemslist(self, tasklist):
+        self.h = 1
+        itemslist = []
+        for item in tasklist:
+            itemslist.append(item["TaskName"])
+
+        return itemslist
